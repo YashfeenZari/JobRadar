@@ -21,101 +21,67 @@
         </div>
       </header>
 
+      <!-- Shared Navigation -->
+      <nav class="jr-nav" aria-label="Primary navigation">
+        <div class="jr-nav__inner">
+          <button
+            class="jr-nav__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="jr-nav-menu"
+          >
+            <span class="jr-nav__toggle-icon" aria-hidden="true">
+              <span class="jr-nav__toggle-bar"></span>
+              <span class="jr-nav__toggle-bar"></span>
+              <span class="jr-nav__toggle-bar"></span>
+            </span>
+            <span class="jr-nav__toggle-label">Menu</span>
+          </button>
+          <ul class="jr-nav__links" id="jr-nav-menu">
+            <li>
+              <a href="/dashboard" data-route="/dashboard" class="jr-nav__link"
+                >Dashboard</a
+              >
+            </li>
+            <li>
+              <a href="/saved" data-route="/saved" class="jr-nav__link">Saved</a>
+            </li>
+            <li>
+              <a href="/digest" data-route="/digest" class="jr-nav__link"
+                >Digest</a
+              >
+            </li>
+            <li>
+              <a href="/settings" data-route="/settings" class="jr-nav__link"
+                >Settings</a
+              >
+            </li>
+            <li>
+              <a href="/proof" data-route="/proof" class="jr-nav__link">Proof</a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
       <!-- Context Header -->
       <section class="jr-context-header">
         <div class="jr-context-header__content">
-          <h1 class="jr-heading-xl">
-            Configure your job notification workspace
-          </h1>
-          <p class="jr-body-lg">
-            Define how JobRadar should monitor and surface roles that align with your criteria. Each step stays calm, explicit, and reversible.
-          </p>
+          <h1 class="jr-heading-xl" id="jr-page-title"></h1>
+          <p class="jr-body-lg" id="jr-page-subtitle"></p>
         </div>
       </section>
 
       <!-- Main Content -->
       <main class="jr-main">
         <section class="jr-main__primary">
-          <!-- Example primary workspace card -->
-          <div class="jr-card">
-            <header class="jr-card__header">
-              <h2 class="jr-heading-md">Primary workspace example</h2>
-              <p class="jr-body-sm">
-                Use this area for the core task of the current step.
-              </p>
-            </header>
-            <div class="jr-card__body jr-stack-24">
-              <div class="jr-form-group">
-                <label for="input-example" class="jr-label">Input label</label>
-                <input
-                  id="input-example"
-                  class="jr-input"
-                  type="text"
-                  placeholder="Plain, descriptive placeholder"
-                />
-                <p class="jr-field-hint jr-body-xs">
-                  Optional hint text explaining what is expected.
-                </p>
-              </div>
-
-              <div class="jr-stack-16">
-                <button class="jr-button jr-button--primary">Primary action</button>
-                <button class="jr-button jr-button--secondary">Secondary action</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Example empty state -->
-          <div class="jr-card jr-card--subtle">
-            <div class="jr-card__body jr-stack-16">
-              <h3 class="jr-heading-sm">No configuration added yet</h3>
-              <p class="jr-body-sm">
-                Start by adding one clear rule. You can adjust or remove it at any time.
-              </p>
-              <button class="jr-button jr-button--primary jr-button--small">
-                Add first rule
-              </button>
-            </div>
+          <div class="jr-route-placeholder" aria-live="polite">
+            <h2 class="jr-heading-md" id="jr-route-heading"></h2>
+            <p class="jr-body-sm" id="jr-route-subtext"></p>
           </div>
         </section>
 
         <aside class="jr-main__secondary">
-          <!-- Step explanation -->
-          <div class="jr-card">
-            <header class="jr-card__header">
-              <h2 class="jr-heading-sm">Step guidance</h2>
-            </header>
-            <div class="jr-card__body jr-stack-16">
-              <p class="jr-body-sm">
-                Use this panel to clarify why this step exists, what a good outcome looks like, and how decisions can be changed later.
-              </p>
-              <!-- Copyable prompt box -->
-              <div class="jr-copy-box">
-                <div class="jr-copy-box__content">
-                  <p class="jr-body-xs">
-                    Explain in one sentence which roles you never want to miss.
-                  </p>
-                </div>
-                <button class="jr-button jr-button--secondary jr-button--ghost">
-                  Copy
-                </button>
-              </div>
-              <div class="jr-stack-16">
-                <button class="jr-button jr-button--secondary">Back</button>
-                <button class="jr-button jr-button--primary">Continue</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Error / info example -->
-          <div class="jr-inline-message jr-inline-message--error">
-            <div class="jr-inline-message__title jr-body-sm">
-              We could not save this configuration.
-            </div>
-            <p class="jr-inline-message__body jr-body-xs">
-              Check that required fields are filled in, then try again. Your previous entries are preserved.
-            </p>
-          </div>
+          <div class="jr-route-secondary-placeholder"></div>
         </aside>
       </main>
 
@@ -132,6 +98,6 @@
         </div>
       </footer>
     </div>
+    <script src="./app.js"></script>
   </body>
 </html>
-
