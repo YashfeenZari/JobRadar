@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobRadar Design System</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="jr-app">
+    <div class="jr-shell">
+      <!-- Top Bar -->
+      <header class="jr-topbar">
+        <div class="jr-topbar__left">
+          <span class="jr-app-name">JobRadar</span>
+        </div>
+        <div class="jr-topbar__center">
+          <span class="jr-progress">Step 1 / 5</span>
+        </div>
+        <div class="jr-topbar__right">
+          <span class="jr-status-badge jr-status-badge--neutral">Not started</span>
+        </div>
+      </header>
+
+      <!-- Context Header -->
+      <section class="jr-context-header">
+        <div class="jr-context-header__content">
+          <h1 class="jr-heading-xl">
+            Configure your job notification workspace
+          </h1>
+          <p class="jr-body-lg">
+            Define how JobRadar should monitor and surface roles that align with your criteria. Each step stays calm, explicit, and reversible.
+          </p>
+        </div>
+      </section>
+
+      <!-- Main Content -->
+      <main class="jr-main">
+        <section class="jr-main__primary">
+          <!-- Example primary workspace card -->
+          <div class="jr-card">
+            <header class="jr-card__header">
+              <h2 class="jr-heading-md">Primary workspace example</h2>
+              <p class="jr-body-sm">
+                Use this area for the core task of the current step.
+              </p>
+            </header>
+            <div class="jr-card__body jr-stack-24">
+              <div class="jr-form-group">
+                <label for="input-example" class="jr-label">Input label</label>
+                <input
+                  id="input-example"
+                  class="jr-input"
+                  type="text"
+                  placeholder="Plain, descriptive placeholder"
+                />
+                <p class="jr-field-hint jr-body-xs">
+                  Optional hint text explaining what is expected.
+                </p>
+              </div>
+
+              <div class="jr-stack-16">
+                <button class="jr-button jr-button--primary">Primary action</button>
+                <button class="jr-button jr-button--secondary">Secondary action</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Example empty state -->
+          <div class="jr-card jr-card--subtle">
+            <div class="jr-card__body jr-stack-16">
+              <h3 class="jr-heading-sm">No configuration added yet</h3>
+              <p class="jr-body-sm">
+                Start by adding one clear rule. You can adjust or remove it at any time.
+              </p>
+              <button class="jr-button jr-button--primary jr-button--small">
+                Add first rule
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="jr-main__secondary">
+          <!-- Step explanation -->
+          <div class="jr-card">
+            <header class="jr-card__header">
+              <h2 class="jr-heading-sm">Step guidance</h2>
+            </header>
+            <div class="jr-card__body jr-stack-16">
+              <p class="jr-body-sm">
+                Use this panel to clarify why this step exists, what a good outcome looks like, and how decisions can be changed later.
+              </p>
+              <!-- Copyable prompt box -->
+              <div class="jr-copy-box">
+                <div class="jr-copy-box__content">
+                  <p class="jr-body-xs">
+                    Explain in one sentence which roles you never want to miss.
+                  </p>
+                </div>
+                <button class="jr-button jr-button--secondary jr-button--ghost">
+                  Copy
+                </button>
+              </div>
+              <div class="jr-stack-16">
+                <button class="jr-button jr-button--secondary">Back</button>
+                <button class="jr-button jr-button--primary">Continue</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error / info example -->
+          <div class="jr-inline-message jr-inline-message--error">
+            <div class="jr-inline-message__title jr-body-sm">
+              We could not save this configuration.
+            </div>
+            <p class="jr-inline-message__body jr-body-xs">
+              Check that required fields are filled in, then try again. Your previous entries are preserved.
+            </p>
+          </div>
+        </aside>
+      </main>
+
+      <!-- Proof Footer -->
+      <footer class="jr-footer">
+        <div class="jr-footer__content">
+          <span class="jr-footer__label jr-body-xs">Proof checklist</span>
+          <ul class="jr-footer__checklist jr-body-xs">
+            <li><span aria-hidden="true">□</span> UI Built</li>
+            <li><span aria-hidden="true">□</span> Logic Working</li>
+            <li><span aria-hidden="true">□</span> Test Passed</li>
+            <li><span aria-hidden="true">□</span> Deployed</li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+
