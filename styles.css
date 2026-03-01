@@ -379,6 +379,48 @@ body.jr-app {
   letter-spacing: 0.08em;
 }
 
+.jr-badge--score-high {
+  border-color: var(--jr-color-success);
+  color: var(--jr-color-success);
+}
+
+.jr-badge--score-mid {
+  border-color: var(--jr-color-warning);
+  color: var(--jr-color-warning);
+}
+
+.jr-badge--score-neutral {
+  border-color: rgba(17, 17, 17, 0.4);
+  color: rgba(17, 17, 17, 0.8);
+}
+
+.jr-badge--score-low {
+  border-color: rgba(17, 17, 17, 0.25);
+  color: rgba(17, 17, 17, 0.6);
+}
+
+.jr-filter-bar__matches-toggle {
+  min-width: 220px;
+}
+
+.jr-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jr-space-8);
+  font-size: var(--jr-font-size-body-sm);
+}
+
+.jr-toggle-input {
+  accent-color: var(--jr-color-accent);
+}
+
+.jr-job-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--jr-space-8);
+}
+
 .jr-job-card__footer {
   display: flex;
   justify-content: space-between;

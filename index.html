@@ -97,42 +97,114 @@
               </header>
               <div class="jr-card__body jr-stack-16">
                 <div class="jr-form-group">
-                  <label for="jr-role-keywords" class="jr-label">Role keywords</label>
+                  <label for="jr-pref-role-keywords" class="jr-label"
+                    >Role keywords</label
+                  >
                   <input
-                    id="jr-role-keywords"
+                    id="jr-pref-role-keywords"
                     class="jr-input"
                     type="text"
-                    placeholder="e.g. Product Manager, Data Analyst"
+                    placeholder="e.g. SDE Intern, React Developer"
                   />
+                  <p class="jr-body-xs jr-settings-note">
+                    Comma-separated. Used to match against job titles and descriptions.
+                  </p>
                 </div>
                 <div class="jr-form-group">
-                  <label for="jr-locations" class="jr-label">Preferred locations</label>
-                  <input
-                    id="jr-locations"
+                  <label for="jr-pref-locations" class="jr-label"
+                    >Preferred locations</label
+                  >
+                  <select
+                    id="jr-pref-locations"
                     class="jr-input"
-                    type="text"
-                    placeholder="e.g. Berlin, Remote within EU"
-                  />
-                </div>
-                <div class="jr-form-group">
-                  <label for="jr-mode" class="jr-label">Mode</label>
-                  <select id="jr-mode" class="jr-input">
-                    <option>Remote</option>
-                    <option>Hybrid</option>
-                    <option>Onsite</option>
+                    multiple
+                    size="4"
+                  >
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Gurugram">Gurugram</option>
+                    <option value="Noida">Noida</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Kochi">Kochi</option>
+                    <option value="Jaipur">Jaipur</option>
+                    <option value="Ahmedabad">Ahmedabad</option>
                   </select>
                 </div>
                 <div class="jr-form-group">
-                  <label for="jr-experience" class="jr-label">Experience level</label>
-                  <select id="jr-experience" class="jr-input">
-                    <option>Entry</option>
-                    <option>Mid</option>
-                    <option>Senior</option>
-                    <option>Leadership</option>
+                  <span class="jr-label">Preferred mode</span>
+                  <div class="jr-checkbox-group">
+                    <label class="jr-checkbox">
+                      <input
+                        type="checkbox"
+                        id="jr-pref-mode-remote"
+                        value="Remote"
+                      />
+                      <span>Remote</span>
+                    </label>
+                    <label class="jr-checkbox">
+                      <input
+                        type="checkbox"
+                        id="jr-pref-mode-hybrid"
+                        value="Hybrid"
+                      />
+                      <span>Hybrid</span>
+                    </label>
+                    <label class="jr-checkbox">
+                      <input
+                        type="checkbox"
+                        id="jr-pref-mode-onsite"
+                        value="Onsite"
+                      />
+                      <span>Onsite</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="jr-form-group">
+                  <label for="jr-pref-experience" class="jr-label"
+                    >Experience level</label
+                  >
+                  <select id="jr-pref-experience" class="jr-input">
+                    <option value="">Any</option>
+                    <option value="Fresher">Fresher</option>
+                    <option value="0-1">0-1</option>
+                    <option value="1-3">1-3</option>
+                    <option value="3-5">3-5</option>
                   </select>
+                </div>
+                <div class="jr-form-group">
+                  <label for="jr-pref-skills" class="jr-label">Skills</label>
+                  <input
+                    id="jr-pref-skills"
+                    class="jr-input"
+                    type="text"
+                    placeholder="e.g. React, Java, SQL"
+                  />
+                  <p class="jr-body-xs jr-settings-note">
+                    Comma-separated. Used to compare against job skills.
+                  </p>
+                </div>
+                <div class="jr-form-group">
+                  <label for="jr-pref-min-score" class="jr-label"
+                    >Minimum match score</label
+                  >
+                  <input
+                    id="jr-pref-min-score"
+                    class="jr-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="40"
+                  />
+                  <p class="jr-body-xs jr-settings-note">
+                    Current threshold:
+                    <span id="jr-pref-min-score-value">40</span>%
+                  </p>
                 </div>
                 <p class="jr-body-xs jr-settings-note">
-                  These fields are placeholders only. In the next step, your preferences will be wired to real logic.
+                  Preferences are stored only in this browser and used to rank and filter roles. They do not leave your device.
                 </p>
               </div>
             </div>
@@ -147,6 +219,18 @@
           >
             <div class="jr-card">
               <div class="jr-card__body">
+                <div
+                  id="jr-dashboard-banner"
+                  class="jr-inline-message jr-inline-message--warning"
+                  hidden
+                >
+                  <div class="jr-inline-message__title jr-body-sm">
+                    Set your preferences to activate intelligent matching.
+                  </div>
+                  <p class="jr-inline-message__body jr-body-xs">
+                    Define your ideal roles, locations, modes, experience, and skills so JobRadar can rank jobs for you.
+                  </p>
+                </div>
                 <div class="jr-filter-bar">
                   <div
                     class="jr-filter-bar__group jr-filter-bar__keyword"
@@ -203,8 +287,19 @@
                     <label for="jr-filter-sort" class="jr-label">Sort</label>
                     <select id="jr-filter-sort" class="jr-input">
                       <option value="latest">Latest</option>
-                      <option value="oldest">Oldest</option>
+                      <option value="match">Match score</option>
+                      <option value="salary">Salary</option>
                     </select>
+                  </div>
+                  <div class="jr-filter-bar__group jr-filter-bar__matches-toggle">
+                    <label class="jr-label jr-toggle-label">
+                      <input
+                        type="checkbox"
+                        id="jr-filter-only-matches"
+                        class="jr-toggle-input"
+                      />
+                      <span>Show only jobs above my threshold</span>
+                    </label>
                   </div>
                 </div>
                 <div
@@ -212,7 +307,7 @@
                   class="jr-empty-message"
                   hidden
                 >
-                  No jobs match your search.
+                  No roles match your criteria. Adjust filters or lower threshold.
                 </div>
                 <div id="jr-dashboard-jobs" class="jr-jobs-list"></div>
               </div>

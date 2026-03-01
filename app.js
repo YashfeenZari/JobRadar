@@ -1,6 +1,9 @@
 (() => {
   const JOBS = createJobsDataset();
   const STORAGE_KEY = "jobradar_saved_jobs_v1";
+  const PREFS_KEY = "jobTrackerPreferences";
+
+  let currentPreferences = loadPreferencesFromStorage();
 
   const routes = {
     "/": {
@@ -79,6 +82,7 @@
     const savedSection = document.getElementById("jr-saved-section");
     const digestSection = document.getElementById("jr-digest-section");
     const proofSection = document.getElementById("jr-proof-section");
+    const banner = document.getElementById("jr-dashboard-banner");
 
     if (
       !pageTitleEl ||
@@ -121,6 +125,14 @@
     }
     if (proofSection) {
       proofSection.hidden = route.section !== "proof";
+    }
+
+    if (banner) {
+      if (route.section === "dashboard" && !hasMeaningfulPreferences()) {
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
     }
 
     navLinks.forEach((link) => {
@@ -212,6 +224,7 @@
       });
     }
 
+    setupPreferencesForm();
     setupDashboardInteractions();
     setupModalInteractions();
   }
@@ -234,6 +247,127 @@
     // Ensure modal starts closed in all environments.
     closeJobModal();
   });
+
+  function loadPreferencesFromStorage() {
+    try {
+      const raw = window.localStorage.getItem(PREFS_KEY);
+      if (!raw) {
+        return {
+          roleKeywords: [],
+          preferredLocations: [],
+          preferredModes: [],
+          experienceLevel: "",
+          skills: [],
+          minMatchScore: 40,
+        };
+      }
+      const parsed = JSON.parse(raw);
+      return {
+        roleKeywords: Array.isArray(parsed.roleKeywords) ? parsed.roleKeywords : [],
+        preferredLocations: Array.isArray(parsed.preferredLocations) ? parsed.preferredLocations : [],
+        preferredModes: Array.isArray(parsed.preferredModes) ? parsed.preferredModes : [],
+        experienceLevel: typeof parsed.experienceLevel === "string" ? parsed.experienceLevel : "",
+        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+        minMatchScore: typeof parsed.minMatchScore === "number" ? parsed.minMatchScore : 40,
+      };
+    } catch {
+      return {
+        roleKeywords: [],
+        preferredLocations: [],
+        preferredModes: [],
+        experienceLevel: "",
+        skills: [],
+        minMatchScore: 40,
+      };
+    }
+  }
+
+  function savePreferencesToStorage(prefs) {
+    try {
+      window.localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch {}
+  }
+
+  function hasMeaningfulPreferences() {
+    const prefs = currentPreferences;
+    return (
+      prefs.roleKeywords.length > 0 ||
+      prefs.preferredLocations.length > 0 ||
+      prefs.preferredModes.length > 0 ||
+      !!prefs.experienceLevel ||
+      prefs.skills.length > 0
+    );
+  }
+
+  function normalizeCommaList(value) {
+    return value
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => part.toLowerCase());
+  }
+
+  function setupPreferencesForm() {
+    const roleInput = document.getElementById("jr-pref-role-keywords");
+    const locationsSelect = document.getElementById("jr-pref-locations");
+    const modeRemote = document.getElementById("jr-pref-mode-remote");
+    const modeHybrid = document.getElementById("jr-pref-mode-hybrid");
+    const modeOnsite = document.getElementById("jr-pref-mode-onsite");
+    const experienceSelect = document.getElementById("jr-pref-experience");
+    const skillsInput = document.getElementById("jr-pref-skills");
+    const minScoreRange = document.getElementById("jr-pref-min-score");
+    const minScoreValue = document.getElementById("jr-pref-min-score-value");
+    if (!roleInput || !locationsSelect || !modeRemote || !modeHybrid || !modeOnsite || !experienceSelect || !skillsInput || !minScoreRange || !minScoreValue) return;
+    roleInput.value = currentPreferences.roleKeywords.join(", ");
+    skillsInput.value = currentPreferences.skills.join(", ");
+    Array.from(locationsSelect.options).forEach((option) => {
+      option.selected = currentPreferences.preferredLocations.includes(option.value);
+    });
+    modeRemote.checked = currentPreferences.preferredModes.includes("Remote");
+    modeHybrid.checked = currentPreferences.preferredModes.includes("Hybrid");
+    modeOnsite.checked = currentPreferences.preferredModes.includes("Onsite");
+    experienceSelect.value = currentPreferences.experienceLevel || "";
+    minScoreRange.value = String(currentPreferences.minMatchScore ?? 40);
+    minScoreValue.textContent = String(currentPreferences.minMatchScore ?? 40);
+    const persist = () => {
+      currentPreferences = readPreferencesFromForm();
+      savePreferencesToStorage(currentPreferences);
+      const path = window.location.pathname === "/" ? "/" : window.location.pathname;
+      const route = findRoute(path);
+      if (route.section === "dashboard") renderDashboard();
+      else if (route.section === "saved") renderSaved();
+    };
+    roleInput.addEventListener("input", persist);
+    skillsInput.addEventListener("input", persist);
+    locationsSelect.addEventListener("change", persist);
+    modeRemote.addEventListener("change", persist);
+    modeHybrid.addEventListener("change", persist);
+    modeOnsite.addEventListener("change", persist);
+    experienceSelect.addEventListener("change", persist);
+    minScoreRange.addEventListener("input", () => { minScoreValue.textContent = minScoreRange.value; });
+    minScoreRange.addEventListener("change", () => { minScoreValue.textContent = minScoreRange.value; persist(); });
+  }
+
+  function readPreferencesFromForm() {
+    const roleInput = document.getElementById("jr-pref-role-keywords");
+    const locationsSelect = document.getElementById("jr-pref-locations");
+    const modeRemote = document.getElementById("jr-pref-mode-remote");
+    const modeHybrid = document.getElementById("jr-pref-mode-hybrid");
+    const modeOnsite = document.getElementById("jr-pref-mode-onsite");
+    const experienceSelect = document.getElementById("jr-pref-experience");
+    const skillsInput = document.getElementById("jr-pref-skills");
+    const minScoreRange = document.getElementById("jr-pref-min-score");
+    const roleKeywords = normalizeCommaList(roleInput?.value || "");
+    const skills = normalizeCommaList(skillsInput?.value || "");
+    const preferredLocations = locationsSelect ? Array.from(locationsSelect.selectedOptions).map((opt) => opt.value) : [];
+    const preferredModes = [];
+    if (modeRemote?.checked) preferredModes.push("Remote");
+    if (modeHybrid?.checked) preferredModes.push("Hybrid");
+    if (modeOnsite?.checked) preferredModes.push("Onsite");
+    const experienceLevel = experienceSelect?.value || "";
+    const minMatchScore = minScoreRange ? Number(minScoreRange.value || 40) : 40;
+    return { roleKeywords, preferredLocations, preferredModes, experienceLevel, skills, minMatchScore };
+  }
 
   function getSavedJobIds() {
     try {
@@ -258,44 +392,6 @@
     return savedIds.includes(id);
   }
 
-  function applyFilters(jobs, filters) {
-    let result = jobs.slice();
-
-    if (filters.keyword) {
-      const keyword = filters.keyword.toLowerCase();
-      result = result.filter((job) => {
-        return (
-          job.title.toLowerCase().includes(keyword) ||
-          job.company.toLowerCase().includes(keyword)
-        );
-      });
-    }
-
-    if (filters.location) {
-      result = result.filter((job) => job.location === filters.location);
-    }
-
-    if (filters.mode) {
-      result = result.filter((job) => job.mode === filters.mode);
-    }
-
-    if (filters.experience) {
-      result = result.filter((job) => job.experience === filters.experience);
-    }
-
-    if (filters.source) {
-      result = result.filter((job) => job.source === filters.source);
-    }
-
-    if (filters.sort === "latest") {
-      result.sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
-    } else if (filters.sort === "oldest") {
-      result.sort((a, b) => b.postedDaysAgo - a.postedDaysAgo);
-    }
-
-    return result;
-  }
-
   const dashboardFilterState = {
     keyword: "",
     location: "",
@@ -303,112 +399,148 @@
     experience: "",
     source: "",
     sort: "latest",
+    showOnlyMatches: false,
   };
+
+  function computeMatchScore(job, prefs) {
+    let score = 0;
+    const roleKeywords = prefs.roleKeywords || [];
+    const skillsPrefs = prefs.skills || [];
+    const preferredLocations = prefs.preferredLocations || [];
+    const preferredModes = prefs.preferredModes || [];
+    const experienceLevel = prefs.experienceLevel || "";
+    const titleLower = job.title.toLowerCase();
+    const descriptionLower = job.description.toLowerCase();
+    const jobSkillsLower = job.skills.map((s) => s.toLowerCase());
+    if (roleKeywords.length > 0) {
+      if (roleKeywords.some((kw) => titleLower.includes(kw))) score += 25;
+      if (roleKeywords.some((kw) => descriptionLower.includes(kw))) score += 15;
+    }
+    if (preferredLocations.length > 0 && preferredLocations.includes(job.location)) score += 15;
+    if (preferredModes.length > 0 && preferredModes.includes(job.mode)) score += 10;
+    if (experienceLevel && experienceLevel === job.experience) score += 10;
+    if (skillsPrefs.length > 0 && skillsPrefs.some((skill) => jobSkillsLower.includes(skill))) score += 15;
+    if (job.postedDaysAgo <= 2) score += 5;
+    if (job.source === "LinkedIn") score += 5;
+    return score > 100 ? 100 : score;
+  }
+
+  function getScoreBadgeClass(score) {
+    if (score >= 80) return "jr-badge--score-high";
+    if (score >= 60) return "jr-badge--score-mid";
+    if (score >= 40) return "jr-badge--score-neutral";
+    return "jr-badge--score-low";
+  }
+
+  function parseSalaryLower(salaryRange) {
+    if (!salaryRange) return 0;
+    const match = salaryRange.match(/(\d+(\.\d+)?)/);
+    return match ? (Number.isNaN(parseFloat(match[1])) ? 0 : parseFloat(match[1])) : 0;
+  }
+
+  function getApplyUrl(job) {
+    if (!job.applyUrl || job.applyUrl.includes("jobradar")) {
+      const titleOnly = encodeURIComponent(job.title);
+      const titleAndCompany = encodeURIComponent(`${job.title} ${job.company}`);
+      if (job.source === "LinkedIn") return `https://www.linkedin.com/jobs/search/?keywords=${titleOnly}`;
+      if (job.source === "Naukri") return `https://www.naukri.com/jobs-in-india?k=${titleAndCompany}`;
+      if (job.source === "Indeed") return `https://www.indeed.com/jobs?q=${titleAndCompany}`;
+      return `https://www.linkedin.com/jobs/search/?keywords=${titleOnly}`;
+    }
+    return job.applyUrl;
+  }
 
   function renderDashboard() {
     const jobsContainer = document.getElementById("jr-dashboard-jobs");
     const emptyMessage = document.getElementById("jr-dashboard-empty-message");
     if (!jobsContainer || !emptyMessage) return;
-
     const savedIds = getSavedJobIds();
-    const filtered = applyFilters(JOBS, dashboardFilterState);
-
-    jobsContainer.innerHTML = "";
-
-    if (filtered.length === 0) {
-      emptyMessage.hidden = false;
-      return;
+    const minScore = currentPreferences.minMatchScore ?? 40;
+    const scoredJobs = JOBS.map((job) => ({ job, matchScore: computeMatchScore(job, currentPreferences) }));
+    let list = scoredJobs;
+    if (dashboardFilterState.keyword) {
+      const keyword = dashboardFilterState.keyword.toLowerCase();
+      list = list.filter(({ job }) =>
+        job.title.toLowerCase().includes(keyword) || job.company.toLowerCase().includes(keyword)
+      );
     }
-
+    if (dashboardFilterState.location) list = list.filter(({ job }) => job.location === dashboardFilterState.location);
+    if (dashboardFilterState.mode) list = list.filter(({ job }) => job.mode === dashboardFilterState.mode);
+    if (dashboardFilterState.experience) list = list.filter(({ job }) => job.experience === dashboardFilterState.experience);
+    if (dashboardFilterState.source) list = list.filter(({ job }) => job.source === dashboardFilterState.source);
+    if (dashboardFilterState.showOnlyMatches) list = list.filter(({ matchScore }) => matchScore >= minScore);
+    if (dashboardFilterState.sort === "latest") list.sort((a, b) => a.job.postedDaysAgo - b.job.postedDaysAgo);
+    else if (dashboardFilterState.sort === "match") list.sort((a, b) => b.matchScore - a.matchScore);
+    else if (dashboardFilterState.sort === "salary") list.sort((a, b) => parseSalaryLower(b.job.salaryRange) - parseSalaryLower(a.job.salaryRange));
+    jobsContainer.innerHTML = "";
+    if (list.length === 0) { emptyMessage.hidden = false; return; }
     emptyMessage.hidden = true;
-
-    filtered.forEach((job) => {
+    list.forEach(({ job, matchScore }) => {
       const card = document.createElement("article");
       card.className = "jr-card jr-job-card";
       card.dataset.jobId = job.id;
-
       const body = document.createElement("div");
       body.className = "jr-card__body jr-stack-16";
-
       const header = document.createElement("div");
       header.className = "jr-job-card__header";
-
       const titleBlock = document.createElement("div");
       titleBlock.className = "jr-job-card__title-block";
-
       const titleEl = document.createElement("h3");
       titleEl.className = "jr-heading-sm";
       titleEl.textContent = job.title;
-
       const companyEl = document.createElement("p");
       companyEl.className = "jr-body-sm";
       companyEl.textContent = job.company;
-
       titleBlock.appendChild(titleEl);
       titleBlock.appendChild(companyEl);
-
-      const badge = document.createElement("span");
-      badge.className = "jr-badge jr-badge--source";
-      badge.textContent = job.source;
-
+      const rightBlock = document.createElement("div");
+      rightBlock.className = "jr-job-card__right";
+      const sourceBadge = document.createElement("span");
+      sourceBadge.className = "jr-badge jr-badge--source";
+      sourceBadge.textContent = job.source;
+      const scoreBadge = document.createElement("span");
+      scoreBadge.className = `jr-badge ${getScoreBadgeClass(matchScore)}`;
+      scoreBadge.textContent = `${matchScore}% match`;
       header.appendChild(titleBlock);
-      header.appendChild(badge);
-
+      rightBlock.appendChild(sourceBadge);
+      rightBlock.appendChild(scoreBadge);
+      header.appendChild(rightBlock);
       const meta = document.createElement("div");
       meta.className = "jr-job-card__meta";
-      meta.innerHTML = [
-        `${job.location} · ${job.mode}`,
-        `${job.experience} years`,
-        job.salaryRange,
-        `${job.postedDaysAgo === 0 ? "Today" : `${job.postedDaysAgo} days ago`}`,
-      ]
-        .map((text) => `<span>${text}</span>`)
-        .join("");
-
+      meta.innerHTML = [`${job.location} · ${job.mode}`, `${job.experience} years`, job.salaryRange, `${job.postedDaysAgo === 0 ? "Today" : `${job.postedDaysAgo} days ago`}`].map((text) => `<span>${text}</span>`).join("");
       const footer = document.createElement("div");
       footer.className = "jr-job-card__footer";
-
       const actions = document.createElement("div");
       actions.className = "jr-job-card__actions";
-
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "jr-button jr-button--secondary";
       viewBtn.dataset.action = "view";
       viewBtn.dataset.jobId = job.id;
       viewBtn.textContent = "View";
-
       const saveBtn = document.createElement("button");
       saveBtn.type = "button";
       saveBtn.className = "jr-button jr-button--secondary";
       saveBtn.dataset.action = "save";
       saveBtn.dataset.jobId = job.id;
       saveBtn.textContent = isJobSaved(job.id, savedIds) ? "Saved" : "Save";
-
       const applyBtn = document.createElement("button");
       applyBtn.type = "button";
       applyBtn.className = "jr-button jr-button--primary";
       applyBtn.dataset.action = "apply";
       applyBtn.dataset.jobId = job.id;
       applyBtn.textContent = "Apply";
-
       actions.appendChild(viewBtn);
       actions.appendChild(saveBtn);
       actions.appendChild(applyBtn);
-
       const savedLabel = document.createElement("span");
       savedLabel.className = "jr-job-card__saved-label";
-      savedLabel.textContent = isJobSaved(job.id, savedIds)
-        ? "Saved to your list"
-        : "";
-
+      savedLabel.textContent = isJobSaved(job.id, savedIds) ? "Saved to your list" : "";
       footer.appendChild(actions);
       footer.appendChild(savedLabel);
-
       body.appendChild(header);
       body.appendChild(meta);
       body.appendChild(footer);
-
       card.appendChild(body);
       jobsContainer.appendChild(card);
     });
@@ -456,12 +588,19 @@
       titleBlock.appendChild(titleEl);
       titleBlock.appendChild(companyEl);
 
-      const badge = document.createElement("span");
-      badge.className = "jr-badge jr-badge--source";
-      badge.textContent = job.source;
-
+      const rightBlock = document.createElement("div");
+      rightBlock.className = "jr-job-card__right";
+      const sourceBadge = document.createElement("span");
+      sourceBadge.className = "jr-badge jr-badge--source";
+      sourceBadge.textContent = job.source;
+      const score = computeMatchScore(job, currentPreferences);
+      const scoreBadge = document.createElement("span");
+      scoreBadge.className = `jr-badge ${getScoreBadgeClass(score)}`;
+      scoreBadge.textContent = `${score}% match`;
       header.appendChild(titleBlock);
-      header.appendChild(badge);
+      rightBlock.appendChild(sourceBadge);
+      rightBlock.appendChild(scoreBadge);
+      header.appendChild(rightBlock);
 
       const meta = document.createElement("div");
       meta.className = "jr-job-card__meta";
@@ -538,10 +677,18 @@
     populateLocationFilter(locationSelect);
 
     if (keywordInput) {
-      keywordInput.addEventListener("input", () => {
+      let keywordDebounceId = null;
+      const applyKeywordFilter = () => {
+        if (keywordDebounceId) clearTimeout(keywordDebounceId);
+        keywordDebounceId = null;
         dashboardFilterState.keyword = keywordInput.value.trim();
         renderDashboard();
+      };
+      keywordInput.addEventListener("input", () => {
+        if (keywordDebounceId) clearTimeout(keywordDebounceId);
+        keywordDebounceId = setTimeout(applyKeywordFilter, 200);
       });
+      keywordInput.addEventListener("blur", applyKeywordFilter);
     }
 
     if (locationSelect) {
@@ -578,6 +725,15 @@
         renderDashboard();
       });
     }
+
+    const onlyMatchesCheckbox = document.getElementById("jr-filter-only-matches");
+    if (onlyMatchesCheckbox) {
+      onlyMatchesCheckbox.checked = dashboardFilterState.showOnlyMatches;
+      onlyMatchesCheckbox.addEventListener("change", () => {
+        dashboardFilterState.showOnlyMatches = !!onlyMatchesCheckbox.checked;
+        renderDashboard();
+      });
+    }
   }
 
   function handleJobsClick(event) {
@@ -594,7 +750,7 @@
     if (action === "view") {
       openJobModal(job);
     } else if (action === "apply") {
-      window.open(job.applyUrl, "_blank", "noopener,noreferrer");
+      window.open(getApplyUrl(job), "_blank", "noopener,noreferrer");
     } else if (action === "save") {
       const savedIds = getSavedJobIds();
       const exists = savedIds.includes(job.id);
