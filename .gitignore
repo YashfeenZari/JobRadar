@@ -1,0 +1,7 @@
+node_modules/
+.cursor/
+*.log
+.env
+.DS_Store
+Thumbs.db
+app_check.txt
