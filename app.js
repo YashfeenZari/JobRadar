@@ -150,6 +150,8 @@
       renderDashboard();
     } else if (route.section === "saved") {
       renderSaved();
+    } else if (route.section === "digest") {
+      renderDigest();
     }
   }
 
@@ -226,6 +228,7 @@
 
     setupPreferencesForm();
     setupDashboardInteractions();
+    setupDigestInteractions();
     setupModalInteractions();
   }
 
@@ -367,6 +370,172 @@
     const experienceLevel = experienceSelect?.value || "";
     const minMatchScore = minScoreRange ? Number(minScoreRange.value || 40) : 40;
     return { roleKeywords, preferredLocations, preferredModes, experienceLevel, skills, minMatchScore };
+  }
+
+  const DIGEST_KEY_PREFIX = "jobTrackerDigest_";
+
+  function getTodayKey() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function getDigestStorageKey(dateKey) {
+    return DIGEST_KEY_PREFIX + (dateKey || getTodayKey());
+  }
+
+  function generateDigestJobs() {
+    const scored = JOBS.map((job) => ({
+      job,
+      matchScore: computeMatchScore(job, currentPreferences),
+    })).sort((a, b) => {
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      return a.job.postedDaysAgo - b.job.postedDaysAgo;
+    });
+    return scored.slice(0, 10).map(({ job, matchScore }) => ({ ...job, matchScore }));
+  }
+
+  function loadDigestForToday() {
+    try {
+      const raw = window.localStorage.getItem(getDigestStorageKey());
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveDigestForToday(jobs) {
+    try {
+      window.localStorage.setItem(getDigestStorageKey(), JSON.stringify(jobs));
+    } catch {}
+  }
+
+  function getOrCreateDigest() {
+    const existing = loadDigestForToday();
+    if (existing !== null) return existing;
+    const jobs = generateDigestJobs();
+    saveDigestForToday(jobs);
+    return jobs;
+  }
+
+  function formatDigestPlainText(jobs) {
+    const list = Array.isArray(jobs) ? jobs : [];
+    const lines = [
+      "Top 10 Jobs For You — 9AM Digest",
+      getTodayKey(),
+      "",
+      ...list.map((j, i) => {
+        const title = j?.title ?? "";
+        const company = j?.company ?? "";
+        const location = j?.location ?? "";
+        const experience = j?.experience ?? "";
+        const score = j?.matchScore != null ? j.matchScore : "";
+        return [
+          `${i + 1}. ${title} — ${company}`,
+          `   Location: ${location} | Experience: ${experience} | Match: ${score}%`,
+        ].join("\n");
+      }),
+      "",
+      "This digest was generated based on your preferences.",
+    ];
+    return lines.join("\n");
+  }
+
+  let lastDigestJobs = [];
+
+  function renderDigest() {
+    const blocking = document.getElementById("jr-digest-blocking");
+    const noMatches = document.getElementById("jr-digest-no-matches");
+    const generateRow = document.getElementById("jr-digest-generate-row");
+    const cardContainer = document.getElementById("jr-digest-card-container");
+    const dateEl = document.getElementById("jr-digest-date");
+    const jobsContainer = document.getElementById("jr-digest-jobs");
+    if (!blocking || !noMatches || !generateRow || !cardContainer || !dateEl || !jobsContainer) return;
+
+    if (!hasMeaningfulPreferences()) {
+      blocking.hidden = false;
+      noMatches.hidden = true;
+      generateRow.hidden = true;
+      cardContainer.hidden = true;
+      return;
+    }
+    blocking.hidden = true;
+    generateRow.hidden = false;
+
+    const existing = loadDigestForToday();
+    const digestJobs = existing !== null ? existing : [];
+    lastDigestJobs = digestJobs;
+
+    if (existing === null) {
+      noMatches.hidden = true;
+      cardContainer.hidden = true;
+      return;
+    }
+    if (digestJobs.length === 0) {
+      noMatches.hidden = false;
+      cardContainer.hidden = true;
+      return;
+    }
+    noMatches.hidden = true;
+    cardContainer.hidden = false;
+    dateEl.textContent = getTodayKey();
+
+    jobsContainer.innerHTML = "";
+    digestJobs.forEach((item) => {
+      const job = item.title ? item : { ...item, matchScore: computeMatchScore(item, currentPreferences) };
+      const score = job.matchScore != null ? job.matchScore : computeMatchScore(job, currentPreferences);
+      const row = document.createElement("div");
+      row.className = "jr-digest-job";
+      const titleEl = document.createElement("p");
+      titleEl.className = "jr-heading-sm jr-digest-job-title";
+      titleEl.textContent = job.title;
+      const meta = document.createElement("p");
+      meta.className = "jr-body-sm jr-digest-job-meta";
+      meta.textContent = `${job.company} · ${job.location} · ${job.experience} years · ${score}% match`;
+      const applyBtn = document.createElement("button");
+      applyBtn.type = "button";
+      applyBtn.className = "jr-button jr-button--primary jr-button--small";
+      applyBtn.textContent = "Apply";
+      applyBtn.addEventListener("click", () => window.open(getApplyUrl(job), "_blank", "noopener,noreferrer"));
+      row.appendChild(titleEl);
+      row.appendChild(meta);
+      row.appendChild(applyBtn);
+      jobsContainer.appendChild(row);
+    });
+  }
+
+  function setupDigestInteractions() {
+    const generateBtn = document.getElementById("jr-digest-generate-btn");
+    const copyBtn = document.getElementById("jr-digest-copy-btn");
+    const emailBtn = document.getElementById("jr-digest-email-btn");
+    if (generateBtn) {
+      generateBtn.addEventListener("click", () => {
+        getOrCreateDigest();
+        renderDigest();
+      });
+    }
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        const text = formatDigestPlainText(lastDigestJobs);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(() => {});
+        }
+      });
+    }
+    if (emailBtn) {
+      emailBtn.addEventListener("click", () => {
+        const body = formatDigestPlainText(lastDigestJobs);
+        const subject = encodeURIComponent("My 9AM Job Digest");
+        const MAX_MAILTO_BODY_CHARS = 1200;
+        const bodySafe = body.length <= MAX_MAILTO_BODY_CHARS ? body : body.substring(0, MAX_MAILTO_BODY_CHARS) + "\n\n[... digest truncated for email link length ...]";
+        const bodyEncSafe = encodeURIComponent(bodySafe);
+        window.location.href = `mailto:?subject=${subject}&body=${bodyEncSafe}`;
+      });
+    }
   }
 
   function getSavedJobIds() {

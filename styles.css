@@ -262,6 +262,106 @@ body.jr-app {
   max-width: var(--jr-text-max-width);
 }
 
+/* Digest (email-style) */
+.jr-digest-wrap {
+  max-width: var(--jr-text-max-width);
+  background-color: var(--jr-color-bg);
+  padding: var(--jr-space-24) 0;
+}
+
+.jr-digest-demo-note {
+  color: rgba(17, 17, 17, 0.6);
+  margin: 0 0 var(--jr-space-16);
+}
+
+.jr-digest-blocking,
+.jr-digest-empty {
+  margin-bottom: var(--jr-space-16);
+}
+
+.jr-digest-actions {
+  margin-bottom: var(--jr-space-24);
+}
+
+.jr-digest-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jr-space-24);
+}
+
+.jr-digest-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.jr-digest-card__body {
+  padding: var(--jr-space-24);
+}
+
+.jr-digest-header {
+  margin: 0 0 var(--jr-space-24);
+  padding-bottom: var(--jr-space-16);
+  border-bottom: 1px solid var(--jr-border-color-subtle);
+}
+
+.jr-digest-title {
+  font-family: var(--jr-font-serif);
+  margin: 0 0 var(--jr-space-8);
+}
+
+.jr-digest-subtext {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.7);
+}
+
+.jr-digest-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jr-space-24);
+}
+
+.jr-digest-job {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jr-space-8);
+  padding-bottom: var(--jr-space-24);
+  border-bottom: 1px solid var(--jr-border-color-subtle);
+}
+
+.jr-digest-job:last-of-type {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.jr-digest-job-title {
+  font-family: var(--jr-font-serif);
+  margin: 0;
+}
+
+.jr-digest-job-meta {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.jr-digest-footer {
+  margin-top: var(--jr-space-24);
+  padding-top: var(--jr-space-16);
+  border-top: 1px solid var(--jr-border-color-subtle);
+}
+
+.jr-digest-footer p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.65);
+}
+
+.jr-digest-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jr-space-16);
+}
+
 .jr-route-secondary-placeholder {
   min-height: var(--jr-space-64);
 }

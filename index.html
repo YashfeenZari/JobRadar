@@ -334,19 +334,53 @@
             </div>
           </section>
 
-          <!-- Digest empty state -->
+          <!-- Digest -->
           <section
             id="jr-digest-section"
             class="jr-section-card"
             hidden
-            aria-label="Digest empty state"
+            aria-label="Daily digest"
           >
-            <div class="jr-card jr-card--subtle">
-              <div class="jr-card__body jr-stack-16">
-                <h3 class="jr-heading-sm">Daily digest is not active yet</h3>
-                <p class="jr-body-sm">
-                  A calm summary of your most relevant roles will be generated here each morning at 9AM in a later step.
-                </p>
+            <div class="jr-digest-wrap">
+              <p class="jr-body-xs jr-digest-demo-note">
+                Demo Mode: Daily 9AM trigger simulated manually.
+              </p>
+              <div id="jr-digest-blocking" class="jr-digest-blocking jr-card" hidden>
+                <div class="jr-card__body">
+                  <p class="jr-body-sm">Set preferences to generate a personalized digest.</p>
+                </div>
+              </div>
+              <div id="jr-digest-no-matches" class="jr-digest-empty jr-card" hidden>
+                <div class="jr-card__body">
+                  <p class="jr-body-sm">No matching roles today. Check again tomorrow.</p>
+                </div>
+              </div>
+              <div id="jr-digest-generate-row" class="jr-digest-actions jr-stack-16">
+                <button type="button" id="jr-digest-generate-btn" class="jr-button jr-button--primary">
+                  Generate Today's 9AM Digest (Simulated)
+                </button>
+              </div>
+              <div id="jr-digest-card-container" class="jr-digest-card-container" hidden>
+                <div class="jr-digest-card jr-card">
+                  <div class="jr-card__body jr-digest-card__body">
+                    <header class="jr-digest-header">
+                      <h2 class="jr-heading-lg jr-digest-title">Top 10 Jobs For You — 9AM Digest</h2>
+                      <p class="jr-body-sm jr-digest-subtext" id="jr-digest-date"></p>
+                    </header>
+                    <div id="jr-digest-jobs" class="jr-digest-jobs"></div>
+                    <footer class="jr-digest-footer">
+                      <p class="jr-body-xs">This digest was generated based on your preferences.</p>
+                    </footer>
+                  </div>
+                </div>
+                <div class="jr-digest-actions jr-digest-action-buttons">
+                  <button type="button" id="jr-digest-copy-btn" class="jr-button jr-button--secondary">
+                    Copy Digest to Clipboard
+                  </button>
+                  <button type="button" id="jr-digest-email-btn" class="jr-button jr-button--secondary">
+                    Create Email Draft
+                  </button>
+                </div>
               </div>
             </div>
           </section>
