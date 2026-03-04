@@ -2,8 +2,81 @@
   const JOBS = createJobsDataset();
   const STORAGE_KEY = "jobradar_saved_jobs_v1";
   const PREFS_KEY = "jobTrackerPreferences";
+  const STATUS_KEY = "jobTrackerStatus";
+  const STATUS_UPDATES_KEY = "jobTrackerStatusUpdates";
+
+  const JOB_STATUSES = ["Not Applied", "Applied", "Rejected", "Selected"];
+  const DEFAULT_STATUS = "Not Applied";
 
   let currentPreferences = loadPreferencesFromStorage();
+
+  function getStatusMap() {
+    try {
+      const raw = window.localStorage.getItem(STATUS_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return typeof parsed === "object" && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function getJobStatus(jobId) {
+    const map = getStatusMap();
+    const s = map[jobId];
+    if (JOB_STATUSES.includes(s)) return s;
+    return DEFAULT_STATUS;
+  }
+
+  function setJobStatus(jobId, status) {
+    if (!JOB_STATUSES.includes(status)) return;
+    const map = getStatusMap();
+    map[jobId] = status;
+    try {
+      window.localStorage.setItem(STATUS_KEY, JSON.stringify(map));
+    } catch {}
+  }
+
+  function getStatusUpdates() {
+    try {
+      const raw = window.localStorage.getItem(STATUS_UPDATES_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function addStatusUpdate(job, status) {
+    const list = getStatusUpdates();
+    list.unshift({
+      jobId: job.id,
+      title: job.title || "",
+      company: job.company || "",
+      status,
+      dateChanged: new Date().toISOString(),
+    });
+    const trimmed = list.slice(0, 50);
+    try {
+      window.localStorage.setItem(STATUS_UPDATES_KEY, JSON.stringify(trimmed));
+    } catch {}
+  }
+
+  function showToast(message) {
+    const container = document.getElementById("jr-toast-container");
+    if (!container) return;
+    const el = document.createElement("div");
+    el.className = "jr-toast";
+    el.setAttribute("role", "status");
+    el.textContent = message;
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("jr-toast--show"));
+    setTimeout(() => {
+      el.classList.remove("jr-toast--show");
+      setTimeout(() => el.remove(), 300);
+    }, 2500);
+  }
 
   const routes = {
     "/": {
@@ -447,6 +520,27 @@
 
   let lastDigestJobs = [];
 
+  function renderDigestStatusUpdates() {
+    const statusUpdatesEl = document.getElementById("jr-digest-status-updates");
+    if (!statusUpdatesEl) return;
+    const updates = getStatusUpdates();
+    statusUpdatesEl.innerHTML = "";
+    if (updates.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "jr-body-sm";
+      empty.textContent = "No status updates yet.";
+      statusUpdatesEl.appendChild(empty);
+    } else {
+      updates.forEach((u) => {
+        const row = document.createElement("div");
+        row.className = "jr-digest-status-update-row";
+        const dateStr = u.dateChanged ? new Date(u.dateChanged).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+        row.innerHTML = `<span class="jr-digest-status-update-title">${escapeHtml(u.title || "")} — ${escapeHtml(u.company || "")}</span><span class="jr-badge ${getStatusBadgeClass(u.status)}">${escapeHtml(u.status || "")}</span><span class="jr-body-xs">${escapeHtml(dateStr)}</span>`;
+        statusUpdatesEl.appendChild(row);
+      });
+    }
+  }
+
   function renderDigest() {
     const blocking = document.getElementById("jr-digest-blocking");
     const noMatches = document.getElementById("jr-digest-no-matches");
@@ -455,6 +549,8 @@
     const dateEl = document.getElementById("jr-digest-date");
     const jobsContainer = document.getElementById("jr-digest-jobs");
     if (!blocking || !noMatches || !generateRow || !cardContainer || !dateEl || !jobsContainer) return;
+
+    renderDigestStatusUpdates();
 
     if (!hasMeaningfulPreferences()) {
       blocking.hidden = false;
@@ -506,6 +602,12 @@
       row.appendChild(applyBtn);
       jobsContainer.appendChild(row);
     });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   function setupDigestInteractions() {
@@ -569,6 +671,7 @@
     source: "",
     sort: "latest",
     showOnlyMatches: false,
+    status: "",
   };
 
   function computeMatchScore(job, prefs) {
@@ -599,6 +702,34 @@
     if (score >= 60) return "jr-badge--score-mid";
     if (score >= 40) return "jr-badge--score-neutral";
     return "jr-badge--score-low";
+  }
+
+  function getStatusBadgeClass(status) {
+    if (status === "Applied") return "jr-badge--status-applied";
+    if (status === "Rejected") return "jr-badge--status-rejected";
+    if (status === "Selected") return "jr-badge--status-selected";
+    return "jr-badge--status-neutral";
+  }
+
+  function buildStatusGroup(job) {
+    const current = getJobStatus(job.id);
+    const wrap = document.createElement("div");
+    wrap.className = "jr-job-card__status-group";
+    const label = document.createElement("span");
+    label.className = "jr-body-xs jr-job-card__status-label";
+    label.textContent = "Status: ";
+    wrap.appendChild(label);
+    JOB_STATUSES.forEach((status) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "jr-button jr-button--small jr-status-btn " + (status === current ? getStatusBadgeClass(status) + " jr-status-btn--active" : "jr-status-btn--inactive");
+      btn.dataset.action = "status";
+      btn.dataset.jobId = job.id;
+      btn.dataset.status = status;
+      btn.textContent = status;
+      wrap.appendChild(btn);
+    });
+    return wrap;
   }
 
   function parseSalaryLower(salaryRange) {
@@ -638,6 +769,7 @@
     if (dashboardFilterState.experience) list = list.filter(({ job }) => job.experience === dashboardFilterState.experience);
     if (dashboardFilterState.source) list = list.filter(({ job }) => job.source === dashboardFilterState.source);
     if (dashboardFilterState.showOnlyMatches) list = list.filter(({ matchScore }) => matchScore >= minScore);
+    if (dashboardFilterState.status) list = list.filter(({ job }) => getJobStatus(job.id) === dashboardFilterState.status);
     if (dashboardFilterState.sort === "latest") list.sort((a, b) => a.job.postedDaysAgo - b.job.postedDaysAgo);
     else if (dashboardFilterState.sort === "match") list.sort((a, b) => b.matchScore - a.matchScore);
     else if (dashboardFilterState.sort === "salary") list.sort((a, b) => parseSalaryLower(b.job.salaryRange) - parseSalaryLower(a.job.salaryRange));
@@ -709,6 +841,7 @@
       footer.appendChild(savedLabel);
       body.appendChild(header);
       body.appendChild(meta);
+      body.appendChild(buildStatusGroup(job));
       body.appendChild(footer);
       card.appendChild(body);
       jobsContainer.appendChild(card);
@@ -817,6 +950,7 @@
 
       body.appendChild(header);
       body.appendChild(meta);
+      body.appendChild(buildStatusGroup(job));
       body.appendChild(footer);
 
       card.appendChild(body);
@@ -888,6 +1022,15 @@
       });
     }
 
+    const statusSelect = document.getElementById("jr-filter-status");
+    if (statusSelect) {
+      statusSelect.value = dashboardFilterState.status || "";
+      statusSelect.addEventListener("change", () => {
+        dashboardFilterState.status = statusSelect.value || "";
+        renderDashboard();
+      });
+    }
+
     if (sortSelect) {
       sortSelect.addEventListener("change", () => {
         dashboardFilterState.sort = sortSelect.value || "latest";
@@ -900,6 +1043,29 @@
       onlyMatchesCheckbox.checked = dashboardFilterState.showOnlyMatches;
       onlyMatchesCheckbox.addEventListener("change", () => {
         dashboardFilterState.showOnlyMatches = !!onlyMatchesCheckbox.checked;
+        renderDashboard();
+      });
+    }
+
+    const clearAllBtn = document.getElementById("jr-filter-clear-all");
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", () => {
+        dashboardFilterState.keyword = "";
+        dashboardFilterState.location = "";
+        dashboardFilterState.mode = "";
+        dashboardFilterState.experience = "";
+        dashboardFilterState.source = "";
+        dashboardFilterState.status = "";
+        dashboardFilterState.sort = "latest";
+        dashboardFilterState.showOnlyMatches = false;
+        if (keywordInput) keywordInput.value = "";
+        if (locationSelect) locationSelect.value = "";
+        if (modeSelect) modeSelect.value = "";
+        if (experienceSelect) experienceSelect.value = "";
+        if (sourceSelect) sourceSelect.value = "";
+        if (statusSelect) statusSelect.value = "";
+        if (sortSelect) sortSelect.value = "latest";
+        if (onlyMatchesCheckbox) onlyMatchesCheckbox.checked = false;
         renderDashboard();
       });
     }
@@ -929,6 +1095,17 @@
       setSavedJobIds(next);
       renderDashboard();
       renderSaved();
+    } else if (action === "status") {
+      const newStatus = actionEl.dataset.status;
+      if (JOB_STATUSES.includes(newStatus)) {
+        setJobStatus(job.id, newStatus);
+        if (newStatus !== DEFAULT_STATUS) {
+          addStatusUpdate(job, newStatus);
+          showToast("Status updated: " + newStatus);
+        }
+        renderDashboard();
+        renderSaved();
+      }
     }
   }
 
