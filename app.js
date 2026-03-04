@@ -4,8 +4,47 @@
   const PREFS_KEY = "jobTrackerPreferences";
   const STATUS_KEY = "jobTrackerStatus";
   const STATUS_UPDATES_KEY = "jobTrackerStatusUpdates";
+  const TEST_CHECKLIST_KEY = "jobTrackerTestStatus";
 
   const JOB_STATUSES = ["Not Applied", "Applied", "Rejected", "Selected"];
+  const TEST_CHECKLIST_ITEMS = [
+    { label: "Preferences persist after refresh", tip: "Set preferences, refresh the page, and confirm they are still set." },
+    { label: "Match score calculates correctly", tip: "Check that jobs show a match % that reflects your preferences." },
+    { label: '"Show only matches" toggle works', tip: "Enable the toggle on Dashboard and confirm only jobs above threshold show." },
+    { label: "Save job persists after refresh", tip: "Save a job, refresh, and confirm it still appears on the Saved page." },
+    { label: "Apply opens in new tab", tip: "Click Apply on a job and confirm it opens in a new tab." },
+    { label: "Status update persists after refresh", tip: "Change a job status to Applied, refresh, and confirm it stays Applied." },
+    { label: "Status filter works correctly", tip: "Set Status filter to Applied and confirm only Applied jobs appear." },
+    { label: "Digest generates top 10 by score", tip: "Generate digest and confirm you see up to 10 jobs ranked by match score." },
+    { label: "Digest persists for the day", tip: "Generate digest, refresh, and confirm the same digest loads without regenerating." },
+    { label: "No console errors on main pages", tip: "Open Dashboard, Saved, Digest, Settings and check the browser console for errors." },
+  ];
+
+  function getTestChecklistState() {
+    try {
+      const raw = window.localStorage.getItem(TEST_CHECKLIST_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (typeof parsed !== "object" || parsed === null) return {};
+      return parsed;
+    } catch {
+      return {};
+    }
+  }
+
+  function setTestChecklistState(state) {
+    try {
+      window.localStorage.setItem(TEST_CHECKLIST_KEY, JSON.stringify(state));
+    } catch {}
+  }
+
+  function allTestsPassed() {
+    const state = getTestChecklistState();
+    for (let i = 0; i < TEST_CHECKLIST_ITEMS.length; i++) {
+      if (!state[String(i)]) return false;
+    }
+    return true;
+  }
   const DEFAULT_STATUS = "Not Applied";
 
   let currentPreferences = loadPreferencesFromStorage();
@@ -117,6 +156,18 @@
       subtitle: "This page will later collect artifacts that show the system working end to end.",
       section: "proof",
     },
+    "/jt/07-test": {
+      path: "/jt/07-test",
+      title: "Test Checklist",
+      subtitle: "Verify all features before shipping.",
+      section: "test",
+    },
+    "/jt/08-ship": {
+      path: "/jt/08-ship",
+      title: "Ship",
+      subtitle: "Ready to ship when all tests pass.",
+      section: "ship",
+    },
   };
 
   const notFoundRoute = {
@@ -155,6 +206,8 @@
     const savedSection = document.getElementById("jr-saved-section");
     const digestSection = document.getElementById("jr-digest-section");
     const proofSection = document.getElementById("jr-proof-section");
+    const testSection = document.getElementById("jr-test-section");
+    const shipSection = document.getElementById("jr-ship-section");
     const banner = document.getElementById("jr-dashboard-banner");
 
     if (
@@ -199,6 +252,12 @@
     if (proofSection) {
       proofSection.hidden = route.section !== "proof";
     }
+    if (testSection) {
+      testSection.hidden = route.section !== "test";
+    }
+    if (shipSection) {
+      shipSection.hidden = route.section !== "ship";
+    }
 
     if (banner) {
       if (route.section === "dashboard" && !hasMeaningfulPreferences()) {
@@ -225,6 +284,10 @@
       renderSaved();
     } else if (route.section === "digest") {
       renderDigest();
+    } else if (route.section === "test") {
+      renderTestChecklist();
+    } else if (route.section === "ship") {
+      renderShipPage();
     }
   }
 
@@ -608,6 +671,81 @@
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function updateTestSummary() {
+    const summaryEl = document.getElementById("jr-test-summary");
+    const warningEl = document.getElementById("jr-test-warning");
+    if (!summaryEl) return;
+    const state = getTestChecklistState();
+    let passed = 0;
+    for (let i = 0; i < TEST_CHECKLIST_ITEMS.length; i++) {
+      if (state[String(i)]) passed++;
+    }
+    summaryEl.textContent = "Tests Passed: " + passed + " / " + TEST_CHECKLIST_ITEMS.length;
+    if (warningEl) {
+      warningEl.hidden = passed >= TEST_CHECKLIST_ITEMS.length;
+    }
+  }
+
+  function renderTestChecklist() {
+    const summaryEl = document.getElementById("jr-test-summary");
+    const warningEl = document.getElementById("jr-test-warning");
+    const listEl = document.getElementById("jr-test-checklist-list");
+    const resetBtn = document.getElementById("jr-test-reset-btn");
+    if (!listEl) return;
+
+    const state = getTestChecklistState();
+    listEl.innerHTML = "";
+    TEST_CHECKLIST_ITEMS.forEach((item, i) => {
+      const key = String(i);
+      const row = document.createElement("div");
+      row.className = "jr-test-checklist-item";
+      const label = document.createElement("label");
+      label.className = "jr-test-checklist-label";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "jr-test-checklist-cb";
+      cb.checked = !!state[key];
+      cb.dataset.index = key;
+      cb.addEventListener("change", () => {
+        const next = getTestChecklistState();
+        next[key] = cb.checked;
+        setTestChecklistState(next);
+        updateTestSummary();
+      });
+      label.appendChild(cb);
+      const span = document.createElement("span");
+      span.textContent = item.label;
+      span.className = "jr-test-checklist-text";
+      label.appendChild(span);
+      if (item.tip) {
+        const tip = document.createElement("span");
+        tip.className = "jr-test-checklist-tip";
+        tip.setAttribute("title", item.tip);
+        tip.textContent = " (How to test)";
+        label.appendChild(tip);
+      }
+      row.appendChild(label);
+      listEl.appendChild(row);
+    });
+    updateTestSummary();
+
+    if (resetBtn) {
+      resetBtn.onclick = function () {
+        setTestChecklistState({});
+        renderTestChecklist();
+      };
+    }
+  }
+
+  function renderShipPage() {
+    const lockedEl = document.getElementById("jr-ship-locked");
+    const unlockedEl = document.getElementById("jr-ship-unlocked");
+    if (!lockedEl) return;
+    const passed = allTestsPassed();
+    lockedEl.hidden = passed;
+    if (unlockedEl) unlockedEl.hidden = !passed;
   }
 
   function setupDigestInteractions() {

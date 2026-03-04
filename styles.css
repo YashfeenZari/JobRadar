@@ -397,6 +397,51 @@ body.jr-app {
   min-width: 0;
 }
 
+/* Test checklist */
+.jr-test-warning {
+  margin: 0 0 var(--jr-space-16);
+  padding: var(--jr-space-8) var(--jr-space-16);
+  border-radius: var(--jr-radius);
+  border: 1px solid var(--jr-color-warning);
+  background: rgba(178, 122, 26, 0.08);
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.jr-test-checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jr-space-12);
+  margin-bottom: var(--jr-space-16);
+}
+
+.jr-test-checklist-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.jr-test-checklist-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jr-space-8);
+  font-size: var(--jr-font-size-body-sm);
+  cursor: pointer;
+}
+
+.jr-test-checklist-cb {
+  accent-color: var(--jr-color-accent);
+  flex-shrink: 0;
+}
+
+.jr-test-checklist-text {
+  flex: 1;
+}
+
+.jr-test-checklist-tip {
+  font-size: var(--jr-font-size-body-xs);
+  color: rgba(17, 17, 17, 0.6);
+  cursor: help;
+}
+
 .jr-route-secondary-placeholder {
   min-height: var(--jr-space-64);
 }

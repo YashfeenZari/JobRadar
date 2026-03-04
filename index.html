@@ -59,6 +59,12 @@
             <li>
               <a href="/proof" data-route="/proof" class="jr-nav__link">Proof</a>
             </li>
+            <li>
+              <a href="/jt/07-test" data-route="/jt/07-test" class="jr-nav__link">Test</a>
+            </li>
+            <li>
+              <a href="/jt/08-ship" data-route="/jt/08-ship" class="jr-nav__link">Ship</a>
+            </li>
           </ul>
         </div>
       </nav>
@@ -417,6 +423,47 @@
                 <p class="jr-body-sm">
                   Use this space in the next step to gather clear evidence that the system behaves as expected.
                 </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Test checklist -->
+          <section
+            id="jr-test-section"
+            class="jr-section-card"
+            hidden
+            aria-label="Test checklist"
+          >
+            <div class="jr-card">
+              <div class="jr-card__body jr-stack-16">
+                <p class="jr-heading-sm" id="jr-test-summary">Tests Passed: 0 / 10</p>
+                <p id="jr-test-warning" class="jr-body-sm jr-test-warning" role="status">
+                  Resolve all issues before shipping.
+                </p>
+                <div id="jr-test-checklist-list" class="jr-test-checklist-list"></div>
+                <button type="button" id="jr-test-reset-btn" class="jr-button jr-button--secondary">
+                  Reset Test Status
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Ship (locked until all tests pass) -->
+          <section
+            id="jr-ship-section"
+            class="jr-section-card"
+            hidden
+            aria-label="Ship"
+          >
+            <div id="jr-ship-locked" class="jr-card jr-inline-message jr-inline-message--warning">
+              <div class="jr-card__body">
+                <p class="jr-body-sm">Complete all tests before shipping.</p>
+              </div>
+            </div>
+            <div id="jr-ship-unlocked" class="jr-card jr-card--subtle" hidden>
+              <div class="jr-card__body jr-stack-16">
+                <h3 class="jr-heading-sm">All tests passed</h3>
+                <p class="jr-body-sm">You are ready to ship.</p>
               </div>
             </div>
           </section>
